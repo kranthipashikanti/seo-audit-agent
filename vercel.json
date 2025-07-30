@@ -1,0 +1,46 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "functions": {
+    "api/crawl-sitemap.js": {
+      "maxDuration": 30
+    },
+    "api/audit.js": {
+      "maxDuration": 30
+    },
+    "api/batch-audit.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
