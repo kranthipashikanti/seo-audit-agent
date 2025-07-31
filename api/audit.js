@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { getIssueResolution, getBrowserHeaders } from './audit-utils.js';
+import { getIssueResolution, getBrowserHeaders, calculateSEOScore } from './audit-utils.js';
 
 // Fallback SEO audit using Axios (when Puppeteer would fail)
 async function performFallbackAudit(url) {
@@ -225,12 +225,43 @@ async function performFallbackAudit(url) {
       addIssue('No links found on page - poor user experience', 8);
     }
 
+    // Prepare metrics for comprehensive scoring
+    const metrics = {
+      title: { content: title, length: title.length, present: !!title },
+      metaDescription: { content: metaDescription, length: metaDescription.length, present: !!metaDescription },
+      performance: { loadTime },
+      images: { total: totalImages, withoutAlt: imagesWithoutAlt },
+      headings: { h1: headings.h1, h2: headings.h2, h3: headings.h3 },
+      links: { total: allLinks.length, internal: internalLinks },
+      technical: {
+        https: httpsCheck,
+        charset: !!metaCharset,
+        viewport: isMobileFriendly,
+        canonical: !!canonical,
+        favicon: !!favicon,
+        language: !!languageDeclaration,
+        schema: schemaMarkup
+      },
+      content: { wordCount },
+      social: {
+        ogTitle: !!ogTitle,
+        ogDescription: !!ogDescription,
+        ogImage: !!ogImage
+      }
+    };
+
+    // Calculate comprehensive SEO score
+    const scoreData = calculateSEOScore(metrics);
+
     return {
       url,
-      score: Math.max(0, score),
+      score: scoreData.totalScore,
+      grade: scoreData.grade,
+      scoreBreakdown: scoreData.breakdown,
       issues,
       issuesWithResolutions,
       metrics: {
+        // Enhanced metrics for display
         title: { content: title, length: title.length, present: !!title },
         metaDescription: { content: metaDescription, length: metaDescription.length, present: !!metaDescription },
         metaKeywords: { content: metaKeywords, present: !!metaKeywords },
@@ -247,7 +278,7 @@ async function performFallbackAudit(url) {
         mobile: { viewport: viewportMeta, friendly: isMobileFriendly },
         robots: { meta: robotsMeta, present: !!robotsMeta },
         security: { https: httpsCheck, charset: metaCharset },
-        technical: { favicon: favicon, language: languageDeclaration, h2Count: headings.h2, h3Count: headings.h3 },
+        technical: { favicon: !!favicon, language: languageDeclaration, h2Count: headings.h2, h3Count: headings.h3 },
         optimization: { largeImages: largeImages, externalLinks: externalLinks, hasAllBasicMeta: hasAllBasicMeta },
         socialComplete: socialMediaComplete
       },

@@ -214,9 +214,9 @@ const SEOAudit = ({ urls, onAuditComplete, isLoading, setIsLoading }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Audit Mode Selector */}
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-white shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">SEO Audit</h2>
+          <h2 className="text-lg font-medium text-altudo-black">SEO Audit</h2>
           <div className="mt-4">
             <div className="flex space-x-4">
               <label className="flex items-center">
@@ -256,14 +256,14 @@ const SEOAudit = ({ urls, onAuditComplete, isLoading, setIsLoading }) => {
                   value={singleUrl}
                   onChange={(e) => setSingleUrl(e.target.value)}
                   placeholder="https://example.com/page"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-altudo-yellow focus:border-altudo-yellow"
                   disabled={isLoading}
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-altudo-black bg-altudo-yellow hover:bg-altudo-yellow-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-altudo-yellow disabled:opacity-50"
               >
                 {isLoading ? 'Auditing...' : 'Run SEO Audit'}
               </button>
@@ -282,7 +282,7 @@ const SEOAudit = ({ urls, onAuditComplete, isLoading, setIsLoading }) => {
                       <button
                         onClick={handleSelectAll}
                         disabled={isLoading}
-                        className="text-sm text-blue-600 hover:text-blue-500"
+                        className="text-sm text-altudo-yellow hover:text-altudo-yellow-dark"
                       >
                         Select All
                       </button>
@@ -323,7 +323,7 @@ const SEOAudit = ({ urls, onAuditComplete, isLoading, setIsLoading }) => {
                   <button
                     onClick={handleBatchAudit}
                     disabled={isLoading || selectedUrls.length === 0}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-altudo-black bg-altudo-yellow hover:bg-altudo-yellow-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-altudo-yellow disabled:opacity-50"
                   >
                     {isLoading ? 'Running Audit...' : `Audit ${selectedUrls.length} URLs`}
                   </button>

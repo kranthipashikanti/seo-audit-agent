@@ -379,6 +379,277 @@ export function getIssueResolution(issueText) {
   };
 }
 
+// SEO Scoring System Based on Industry Best Practices
+// Total: 100 points distributed across key SEO factors
+export const SEO_SCORING_WEIGHTS = {
+  // Core On-Page SEO (35 points total)
+  TITLE_TAG: {
+    missing: -20,           // Critical - affects CTR and rankings
+    optimal_length: 15,     // 30-60 characters
+    suboptimal_length: -8,  // Too short/long but present
+    max_points: 20
+  },
+  
+  META_DESCRIPTION: {
+    missing: -15,           // High impact on CTR
+    optimal_length: 10,     // 120-160 characters  
+    suboptimal_length: -5,  // Present but not optimal
+    max_points: 15
+  },
+
+  // Content Structure (20 points total)
+  HEADING_STRUCTURE: {
+    missing_h1: -12,        // H1 is crucial for topic clarity
+    multiple_h1: -6,        // Confuses search engines
+    optimal_h1: 8,          // Single, descriptive H1
+    has_h2_structure: 6,    // Good content hierarchy
+    poor_structure: -4,     // No H2s with substantial content
+    max_points: 14
+  },
+
+  CONTENT_QUALITY: {
+    optimal_length: 6,      // 300+ words shows depth
+    too_short: -8,          // Under 300 words
+    max_points: 6
+  },
+
+  // Technical SEO (25 points total)
+  TECHNICAL_FOUNDATION: {
+    https_secure: 8,        // Security & ranking factor
+    missing_https: -12,     // Major trust/ranking issue
+    mobile_friendly: 6,     // Mobile-first indexing
+    missing_viewport: -10,  // Critical for mobile
+    fast_loading: 4,        // Under 3 seconds
+    slow_loading: -6,       // Over 3 seconds
+    charset_present: 2,     // Technical completeness
+    language_declared: 2,   // Accessibility & international
+    canonical_url: 3,       // Duplicate content prevention
+    max_points: 25
+  },
+
+  // Image Optimization (8 points total)
+  IMAGES: {
+    all_optimized: 5,       // All images have alt text
+    missing_alt_minor: -2,  // 1-2 images missing alt
+    missing_alt_major: -6,  // 3+ images missing alt
+    efficient_formats: 3,   // WebP, proper sizing
+    max_points: 8
+  },
+
+  // User Experience Signals (7 points total)
+  USER_EXPERIENCE: {
+    good_navigation: 3,     // Has internal links
+    poor_navigation: -5,    // No internal links
+    has_favicon: 1,         // Professional appearance
+    no_links: -3,           // Dead-end pages
+    max_points: 4
+  },
+
+  // Advanced SEO (5 points total)
+  ADVANCED_SEO: {
+    structured_data: 3,     // Rich snippets potential
+    social_optimization: 2, // Complete Open Graph
+    max_points: 5
+  }
+};
+
+// Calculate comprehensive SEO score
+export function calculateSEOScore(metrics) {
+  let score = 0;
+  const breakdown = {
+    onPage: 0,
+    technical: 0,
+    content: 0,
+    images: 0,
+    userExperience: 0,
+    advanced: 0
+  };
+
+  // Title Tag Scoring (20 points max)
+  if (!metrics.title?.present) {
+    score += SEO_SCORING_WEIGHTS.TITLE_TAG.missing;
+    breakdown.onPage += SEO_SCORING_WEIGHTS.TITLE_TAG.missing;
+  } else {
+    const titleLength = metrics.title.length || 0;
+    if (titleLength >= 30 && titleLength <= 60) {
+      score += SEO_SCORING_WEIGHTS.TITLE_TAG.optimal_length;
+      breakdown.onPage += SEO_SCORING_WEIGHTS.TITLE_TAG.optimal_length;
+    } else {
+      score += SEO_SCORING_WEIGHTS.TITLE_TAG.suboptimal_length;
+      breakdown.onPage += SEO_SCORING_WEIGHTS.TITLE_TAG.suboptimal_length;
+    }
+  }
+
+  // Meta Description Scoring (15 points max)
+  if (!metrics.metaDescription?.present) {
+    score += SEO_SCORING_WEIGHTS.META_DESCRIPTION.missing;
+    breakdown.onPage += SEO_SCORING_WEIGHTS.META_DESCRIPTION.missing;
+  } else {
+    const descLength = metrics.metaDescription.length || 0;
+    if (descLength >= 120 && descLength <= 160) {
+      score += SEO_SCORING_WEIGHTS.META_DESCRIPTION.optimal_length;
+      breakdown.onPage += SEO_SCORING_WEIGHTS.META_DESCRIPTION.optimal_length;
+    } else {
+      score += SEO_SCORING_WEIGHTS.META_DESCRIPTION.suboptimal_length;
+      breakdown.onPage += SEO_SCORING_WEIGHTS.META_DESCRIPTION.suboptimal_length;
+    }
+  }
+
+  // Heading Structure Scoring (14 points max)
+  const h1Count = metrics.headings?.h1 || 0;
+  const h2Count = metrics.headings?.h2 || 0;
+  const wordCount = metrics.content?.wordCount || 0;
+
+  if (h1Count === 0) {
+    score += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.missing_h1;
+    breakdown.content += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.missing_h1;
+  } else if (h1Count === 1) {
+    score += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.optimal_h1;
+    breakdown.content += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.optimal_h1;
+  } else {
+    score += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.multiple_h1;
+    breakdown.content += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.multiple_h1;
+  }
+
+  if (h2Count > 0 && wordCount > 300) {
+    score += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.has_h2_structure;
+    breakdown.content += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.has_h2_structure;
+  } else if (wordCount > 300) {
+    score += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.poor_structure;
+    breakdown.content += SEO_SCORING_WEIGHTS.HEADING_STRUCTURE.poor_structure;
+  }
+
+  // Content Quality Scoring (6 points max)
+  if (wordCount >= 300) {
+    score += SEO_SCORING_WEIGHTS.CONTENT_QUALITY.optimal_length;
+    breakdown.content += SEO_SCORING_WEIGHTS.CONTENT_QUALITY.optimal_length;
+  } else {
+    score += SEO_SCORING_WEIGHTS.CONTENT_QUALITY.too_short;
+    breakdown.content += SEO_SCORING_WEIGHTS.CONTENT_QUALITY.too_short;
+  }
+
+  // Technical SEO Scoring (25 points max)
+  if (metrics.technical?.https) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.https_secure;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.https_secure;
+  } else {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.missing_https;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.missing_https;
+  }
+
+  if (metrics.technical?.viewport) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.mobile_friendly;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.mobile_friendly;
+  } else {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.missing_viewport;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.missing_viewport;
+  }
+
+  const loadTime = metrics.performance?.loadTime || 0;
+  if (loadTime > 0 && loadTime <= 3000) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.fast_loading;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.fast_loading;
+  } else if (loadTime > 3000) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.slow_loading;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.slow_loading;
+  }
+
+  if (metrics.technical?.charset) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.charset_present;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.charset_present;
+  }
+
+  if (metrics.technical?.language) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.language_declared;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.language_declared;
+  }
+
+  if (metrics.technical?.canonical) {
+    score += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.canonical_url;
+    breakdown.technical += SEO_SCORING_WEIGHTS.TECHNICAL_FOUNDATION.canonical_url;
+  }
+
+  // Image Optimization Scoring (8 points max)
+  const totalImages = metrics.images?.total || 0;
+  const imagesWithoutAlt = metrics.images?.withoutAlt || 0;
+
+  if (totalImages > 0) {
+    if (imagesWithoutAlt === 0) {
+      score += SEO_SCORING_WEIGHTS.IMAGES.all_optimized;
+      breakdown.images += SEO_SCORING_WEIGHTS.IMAGES.all_optimized;
+    } else if (imagesWithoutAlt <= 2) {
+      score += SEO_SCORING_WEIGHTS.IMAGES.missing_alt_minor;
+      breakdown.images += SEO_SCORING_WEIGHTS.IMAGES.missing_alt_minor;
+    } else {
+      score += SEO_SCORING_WEIGHTS.IMAGES.missing_alt_major;
+      breakdown.images += SEO_SCORING_WEIGHTS.IMAGES.missing_alt_major;
+    }
+  }
+
+  // User Experience Scoring (4 points max)
+  const internalLinks = metrics.links?.internal || 0;
+  const totalLinks = metrics.links?.total || 0;
+
+  if (internalLinks > 0) {
+    score += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.good_navigation;
+    breakdown.userExperience += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.good_navigation;
+  } else if (totalLinks === 0) {
+    score += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.no_links;
+    breakdown.userExperience += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.no_links;
+  } else {
+    score += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.poor_navigation;
+    breakdown.userExperience += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.poor_navigation;
+  }
+
+  if (metrics.technical?.favicon) {
+    score += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.has_favicon;
+    breakdown.userExperience += SEO_SCORING_WEIGHTS.USER_EXPERIENCE.has_favicon;
+  }
+
+  // Advanced SEO Scoring (5 points max)
+  if (metrics.technical?.schema) {
+    score += SEO_SCORING_WEIGHTS.ADVANCED_SEO.structured_data;
+    breakdown.advanced += SEO_SCORING_WEIGHTS.ADVANCED_SEO.structured_data;
+  }
+
+  if (metrics.social?.ogTitle && metrics.social?.ogDescription) {
+    score += SEO_SCORING_WEIGHTS.ADVANCED_SEO.social_optimization;
+    breakdown.advanced += SEO_SCORING_WEIGHTS.ADVANCED_SEO.social_optimization;
+  }
+
+  // Ensure score is between 0-100
+  score = Math.max(0, Math.min(100, Math.round(score + 70))); // Base score of 70 + improvements/deductions
+
+  return {
+    totalScore: score,
+    breakdown,
+    grade: getScoreGrade(score),
+    maxPossibleScore: 100
+  };
+}
+
+// Get letter grade based on score
+export function getScoreGrade(score) {
+  if (score >= 90) return 'A+';
+  if (score >= 85) return 'A';
+  if (score >= 80) return 'A-';
+  if (score >= 75) return 'B+';
+  if (score >= 70) return 'B';
+  if (score >= 65) return 'B-';
+  if (score >= 60) return 'C+';
+  if (score >= 55) return 'C';
+  if (score >= 50) return 'C-';
+  if (score >= 40) return 'D';
+  return 'F';
+}
+
+// Get score color for UI
+export function getScoreColor(score) {
+  if (score >= 80) return { bg: 'bg-altudo-yellow/20', text: 'text-altudo-black', border: 'border-altudo-yellow' };
+  if (score >= 60) return { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300' };
+  return { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300' };
+}
+
 // Rotating user agents to avoid detection
 export const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

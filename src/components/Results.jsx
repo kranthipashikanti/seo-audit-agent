@@ -74,13 +74,13 @@ const Results = ({ results, urls }) => {
   }, [successfulResults]);
 
   const getScoreColor = (score) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    if (score >= 80) return 'text-altudo-black bg-altudo-yellow/20';
+    if (score >= 60) return 'text-yellow-700 bg-yellow-100';
     return 'text-red-600 bg-red-100';
   };
 
   const getScoreBarColor = (score) => {
-    if (score >= 80) return 'bg-green-500';
+    if (score >= 80) return 'bg-altudo-yellow';
     if (score >= 60) return 'bg-yellow-500';
     return 'bg-red-500';
   };
@@ -124,7 +124,7 @@ const Results = ({ results, urls }) => {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No results yet</h3>
+          <h3 className="mt-2 text-sm font-medium text-altudo-black">No results yet</h3>
           <p className="mt-1 text-sm text-gray-500">Run an SEO audit to see detailed results here.</p>
         </div>
       </div>
@@ -137,7 +137,7 @@ const Results = ({ results, urls }) => {
       {summary && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -146,14 +146,14 @@ const Results = ({ results, urls }) => {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Average Score</dt>
-                      <dd className="text-lg font-medium text-gray-900">{summary.avgScore}/100</dd>
+                      <dd className="text-lg font-medium text-altudo-black">{summary.avgScore}/100</dd>
                     </dl>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -162,14 +162,14 @@ const Results = ({ results, urls }) => {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Good Pages</dt>
-                      <dd className="text-lg font-medium text-gray-900">{summary.goodPages}/{summary.total}</dd>
+                      <dd className="text-lg font-medium text-altudo-black">{summary.goodPages}/{summary.total}</dd>
                     </dl>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -178,14 +178,14 @@ const Results = ({ results, urls }) => {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Issues</dt>
-                      <dd className="text-lg font-medium text-gray-900">{summary.totalIssues}</dd>
+                      <dd className="text-lg font-medium text-altudo-black">{summary.totalIssues}</dd>
                     </dl>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white overflow-hidden shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -194,7 +194,7 @@ const Results = ({ results, urls }) => {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Avg Load Time</dt>
-                      <dd className="text-lg font-medium text-gray-900">{summary.avgLoadTime}ms</dd>
+                      <dd className="text-lg font-medium text-altudo-black">{summary.avgLoadTime}ms</dd>
                     </dl>
                   </div>
                 </div>
@@ -204,9 +204,9 @@ const Results = ({ results, urls }) => {
 
           {/* Priority Issues Summary */}
           {(summary.criticalIssues > 0 || summary.highIssues > 0 || summary.mediumIssues > 0) && (
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Issues by Priority</h3>
+                <h3 className="text-lg font-medium text-altudo-black">Issues by Priority</h3>
                 <p className="mt-1 text-sm text-gray-500">Focus on critical and high-priority issues first</p>
               </div>
               <div className="p-6">
@@ -354,9 +354,16 @@ const Results = ({ results, urls }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(result.score)}`}>
-                          {result.score}/100
-                        </span>
+                        <div>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(result.score)}`}>
+                            {result.score}/100
+                          </span>
+                          {result.grade && (
+                            <div className="text-xs text-gray-500 mt-1 text-center">
+                              Grade {result.grade}
+                            </div>
+                          )}
+                        </div>
                         <div className="ml-2 w-16 bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${getScoreBarColor(result.score)}`}
@@ -449,11 +456,78 @@ const Results = ({ results, urls }) => {
                   >
                     {selectedResult.url}
                   </a>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(selectedResult.score)}`}>
-                    Score: {selectedResult.score}/100
-                  </span>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(selectedResult.score)}`}>
+                      Score: {selectedResult.score}/100
+                    </span>
+                    {selectedResult.grade && (
+                      <div className="mt-1 text-xs text-gray-600">
+                        Grade: <span className="font-semibold">{selectedResult.grade}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Score Breakdown */}
+              {selectedResult.scoreBreakdown && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-md font-medium text-gray-900 mb-3">📊 Score Breakdown</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">On-Page SEO</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.onPage >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.onPage > 0 ? '+' : ''}{selectedResult.scoreBreakdown.onPage}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">Technical SEO</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.technical >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.technical > 0 ? '+' : ''}{selectedResult.scoreBreakdown.technical}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">Content</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.content >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.content > 0 ? '+' : ''}{selectedResult.scoreBreakdown.content}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">Images</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.images >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.images > 0 ? '+' : ''}{selectedResult.scoreBreakdown.images}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">User Experience</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.userExperience >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.userExperience > 0 ? '+' : ''}{selectedResult.scoreBreakdown.userExperience}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600">Advanced SEO</div>
+                      <div className={`text-lg font-semibold ${
+                        selectedResult.scoreBreakdown.advanced >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {selectedResult.scoreBreakdown.advanced > 0 ? '+' : ''}{selectedResult.scoreBreakdown.advanced}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    Base score: 70 points • Adjustments shown above • Total: {selectedResult.score}/100
+                  </div>
+                </div>
+              )}
 
               {/* Issues with Resolutions */}
               {selectedResult.issuesWithResolutions && selectedResult.issuesWithResolutions.length > 0 && (

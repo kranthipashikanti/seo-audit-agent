@@ -3,6 +3,7 @@ import cors from 'cors';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import xml2js from 'xml2js';
+import { getIssueResolution, calculateSEOScore } from '../api/audit-utils.js';
 
 const app = express();
 const PORT = process.env.PORT || 3004;
@@ -178,37 +179,165 @@ app.post('/api/batch-audit', async (req, res) => {
         const images = $('img');
         const imagesWithoutAlt = images.filter((i, el) => !$(el).attr('alt')).length;
 
-        // Simple scoring
+        // Enhanced scoring with detailed resolutions
         let score = 100;
         const issues = [];
+        const issuesWithResolutions = [];
 
+        // Helper function to add issue with resolution
+        const addIssue = (issueText, scoreDeduction) => {
+          score -= scoreDeduction;
+          issues.push(issueText);
+          const resolution = getIssueResolution(issueText);
+          issuesWithResolutions.push({
+            issue: issueText,
+            scoreImpact: scoreDeduction,
+            ...resolution
+          });
+        };
+
+        // Enhanced SEO checks
+        const canonical = $('link[rel="canonical"]').attr('href') || '';
+        const viewportMeta = $('meta[name="viewport"]').attr('content') || '';
+        const isMobileFriendly = viewportMeta.includes('width=device-width');
+        const schemaMarkup = $('script[type="application/ld+json"]').length > 0;
+        const wordCount = $('body').text().split(/\s+/).filter(word => word.length > 0).length;
+        const httpsCheck = url.startsWith('https://');
+        const metaCharset = $('meta[charset]').attr('charset') || '';
+        const favicon = $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').length > 0;
+        const languageDeclaration = $('html').attr('lang') || '';
+        const ogTitle = $('meta[property="og:title"]').attr('content') || '';
+        const ogDescription = $('meta[property="og:description"]').attr('content') || '';
+        const ogImage = $('meta[property="og:image"]').attr('content') || '';
+        const allLinks = $('a[href]');
+        const internalLinks = allLinks.filter((i, el) => {
+          const href = $(el).attr('href');
+          return href && (href.startsWith('/') || href.includes(new URL(url).hostname));
+        }).length;
+
+        // Apply comprehensive SEO checks
         if (!title) {
-          score -= 15;
-          issues.push('Missing page title');
+          addIssue('Missing page title', 15);
+        } else if (title.length < 30 || title.length > 60) {
+          addIssue('Title length not optimal (30-60 characters)', 10);
         }
+
         if (!metaDescription) {
-          score -= 15;
-          issues.push('Missing meta description');
+          addIssue('Missing meta description', 15);
+        } else if (metaDescription.length < 120 || metaDescription.length > 160) {
+          addIssue('Meta description length not optimal (120-160 characters)', 10);
         }
+
         if (h1Count === 0) {
-          score -= 15;
-          issues.push('Missing H1 tag');
+          addIssue('Missing H1 tag', 15);
+        } else if (h1Count > 1) {
+          addIssue('Multiple H1 tags found', 10);
         }
+
         if (imagesWithoutAlt > 0) {
-          score -= Math.min(15, imagesWithoutAlt * 2);
-          issues.push(`${imagesWithoutAlt} images missing alt text`);
+          const scoreDeduction = Math.min(15, imagesWithoutAlt * 2);
+          addIssue(`${imagesWithoutAlt} images missing alt text`, scoreDeduction);
         }
+
+        if (!canonical) {
+          addIssue('Missing canonical URL', 5);
+        }
+
+        if (!isMobileFriendly) {
+          addIssue('Missing mobile-friendly viewport meta tag', 10);
+        }
+
+        if (loadTime > 3000) {
+          addIssue('Page load time exceeds 3 seconds', 10);
+        }
+
+        if (!schemaMarkup) {
+          addIssue('No structured data (Schema.org) found', 5);
+        }
+
+        if (wordCount < 300) {
+          addIssue('Content is too short (less than 300 words)', 10);
+        }
+
+        if (!httpsCheck) {
+          addIssue('Website not using HTTPS/SSL', 20);
+        }
+
+        if (!metaCharset) {
+          addIssue('Missing charset declaration', 5);
+        }
+
+        if (!favicon) {
+          addIssue('Missing favicon', 3);
+        }
+
+        if (!languageDeclaration) {
+          addIssue('Missing HTML language declaration', 5);
+        }
+
+        if (!ogTitle || !ogDescription) {
+          addIssue('Incomplete Open Graph tags (missing title or description)', 8);
+        }
+
+        if (!ogImage) {
+          addIssue('Missing Open Graph image', 5);
+        }
+
+        if (internalLinks === 0) {
+          addIssue('No internal links found - poor site navigation', 10);
+        }
+
+        if (allLinks.length === 0) {
+          addIssue('No links found on page - poor user experience', 15);
+        }
+
+        const robotsMeta = $('meta[name="robots"]').attr('content') || '';
+        if (robotsMeta.includes('noindex')) {
+          addIssue('Page set to noindex - will not appear in search results', 20);
+        }
+
+        const h2Count = $('h2').length;
+        if (h2Count === 0 && wordCount > 300) {
+          addIssue('No H2 headings found - poor content structure', 8);
+        }
+
+        // Prepare metrics for comprehensive scoring
+        const metrics = {
+          title: { content: title, present: !!title, length: title.length },
+          metaDescription: { content: metaDescription, present: !!metaDescription, length: metaDescription.length },
+          performance: { loadTime },
+          images: { total: images.length, withoutAlt: imagesWithoutAlt },
+          headings: { h1: h1Count, h2: $('h2').length, h3: $('h3').length },
+          links: { total: allLinks.length, internal: internalLinks },
+          technical: {
+            https: httpsCheck,
+            charset: !!metaCharset,
+            viewport: isMobileFriendly,
+            canonical: !!canonical,
+            favicon: favicon,
+            language: !!languageDeclaration,
+            schema: schemaMarkup
+          },
+          content: { wordCount },
+          social: {
+            ogTitle: !!ogTitle,
+            ogDescription: !!ogDescription,
+            ogImage: !!ogImage
+          }
+        };
+
+        // Calculate comprehensive SEO score
+        const scoreData = calculateSEOScore(metrics);
 
         const audit = {
           url,
-          score: Math.max(0, score),
+          score: scoreData.totalScore,
+          grade: scoreData.grade,
+          scoreBreakdown: scoreData.breakdown,
           issues,
-          metrics: {
-            title: { content: title, present: !!title },
-            metaDescription: { content: metaDescription, present: !!metaDescription },
-            performance: { loadTime },
-            images: { total: images.length, withoutAlt: imagesWithoutAlt }
-          },
+          issuesWithResolutions,
+          metrics,
+          auditMethod: 'axios-cheerio',
           timestamp: new Date().toISOString()
         };
 

@@ -49,9 +49,9 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-white shadow-altudo rounded-altudo border-t-4 border-altudo-yellow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Sitemap Crawler</h2>
+          <h2 className="text-lg font-medium text-altudo-black">Sitemap Crawler</h2>
           <p className="mt-1 text-sm text-gray-500">
             Enter a sitemap URL to discover and extract all pages for SEO analysis
           </p>
@@ -70,7 +70,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
                   value={sitemapUrl}
                   onChange={(e) => setSitemapUrl(e.target.value)}
                   placeholder="https://example.com/sitemap.xml"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-altudo-yellow focus:border-altudo-yellow"
                   disabled={isLoading}
                 />
               </div>
@@ -83,7 +83,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
                       type="button"
                       onClick={() => setSitemapUrl(url)}
                       disabled={isLoading}
-                      className="text-xs text-blue-600 hover:text-blue-500 underline"
+                      className="text-xs text-altudo-yellow hover:text-altudo-yellow-dark underline"
                     >
                       {url.split('/').pop()}
                     </button>
@@ -112,7 +112,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-altudo-black bg-altudo-yellow hover:bg-altudo-yellow-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-altudo-yellow disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
@@ -134,7 +134,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
 
               {crawlResult && (
                 <div className="text-sm space-y-1">
-                  <div className="text-green-600">
+                  <div className="text-altudo-yellow-dark font-medium">
                     ✅ Found {crawlResult.total} URLs
                   </div>
                   {crawlResult.total >= 1000 && (
@@ -143,7 +143,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
                     </div>
                   )}
                   {crawlResult.total > 0 && (
-                    <div className="text-blue-600 text-xs">
+                    <div className="text-altudo-black text-xs">
                       💡 Select URLs below and switch to SEO Audit tab to begin analysis.
                     </div>
                   )}
@@ -154,7 +154,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
 
           {crawlResult && (
             <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Discovered URLs ({crawlResult.total})</h3>
+              <h3 className="text-lg font-medium text-altudo-black mb-4">Discovered URLs ({crawlResult.total})</h3>
               <div className="bg-gray-50 rounded-md p-4 max-h-96 overflow-y-auto">
                 <div className="space-y-2">
                   {crawlResult.urls.slice(0, 50).map((url, index) => (
@@ -164,7 +164,7 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
                           href={url.loc} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-500 truncate block"
+                          className="text-sm text-altudo-yellow hover:text-altudo-yellow-dark truncate block"
                         >
                           {url.loc}
                         </a>
