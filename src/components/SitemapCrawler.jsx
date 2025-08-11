@@ -30,8 +30,8 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
         sitemapUrl: sitemapUrl.trim()
       });
 
-      const { urls, total } = response.data;
-      setCrawlResult({ urls, total });
+      const { urls, total, sitemaps, sitemapCount } = response.data;
+      setCrawlResult({ urls, total, sitemaps, sitemapCount });
       onCrawlComplete(urls);
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.message || 'Failed to crawl sitemap';
@@ -153,39 +153,117 @@ const SitemapCrawler = ({ onCrawlComplete, isLoading, setIsLoading }) => {
           </form>
 
           {crawlResult && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-altudo-black mb-4">Discovered URLs ({crawlResult.total})</h3>
-              <div className="bg-gray-50 rounded-md p-4 max-h-96 overflow-y-auto">
-                <div className="space-y-2">
-                  {crawlResult.urls.slice(0, 50).map((url, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 px-3 bg-white rounded border">
-                      <div className="flex-1 min-w-0">
-                        <a 
-                          href={url.loc} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-altudo-yellow hover:text-altudo-yellow-dark truncate block"
-                        >
-                          {url.loc}
-                        </a>
-                        {url.lastmod && (
-                          <p className="text-xs text-gray-500">
-                            Last modified: {new Date(url.lastmod).toLocaleDateString()}
-                          </p>
+            <div className="mt-6 space-y-6">
+              {/* Sub-sitemaps Table */}
+              {crawlResult.sitemaps && crawlResult.sitemaps.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium text-altudo-black mb-4">
+                    Sub-sitemaps ({crawlResult.sitemapCount})
+                  </h3>
+                  <div className="bg-white rounded-md border overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Sitemap URL
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            URL Count
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Last Modified
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {crawlResult.sitemaps.map((sitemap, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-altudo-yellow truncate max-w-xs">
+                                <a 
+                                  href={sitemap.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="hover:text-altudo-yellow-dark"
+                                  title={sitemap.url}
+                                >
+                                  {sitemap.url}
+                                </a>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 font-medium">
+                                {sitemap.urlCount.toLocaleString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {sitemap.lastmod 
+                                  ? new Date(sitemap.lastmod).toLocaleDateString()
+                                  : 'N/A'
+                                }
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                sitemap.status === 'success' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {sitemap.status === 'success' ? '✅ Success' : '❌ Failed'}
+                              </span>
+                              {sitemap.error && (
+                                <div className="text-xs text-red-600 mt-1" title={sitemap.error}>
+                                  {sitemap.error.length > 50 ? sitemap.error.substring(0, 50) + '...' : sitemap.error}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* URLs List */}
+              <div>
+                <h3 className="text-lg font-medium text-altudo-black mb-4">Discovered URLs ({crawlResult.total})</h3>
+                <div className="bg-gray-50 rounded-md p-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-2">
+                    {crawlResult.urls.slice(0, 100).map((url, index) => (
+                      <div key={index} className="flex items-center justify-between py-2 px-3 bg-white rounded border">
+                        <div className="flex-1 min-w-0">
+                          <a 
+                            href={url.loc} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-altudo-yellow hover:text-altudo-yellow-dark truncate block"
+                          >
+                            {url.loc}
+                          </a>
+                          {url.lastmod && (
+                            <p className="text-xs text-gray-500">
+                              Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        {url.priority && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            Priority: {url.priority}
+                          </span>
                         )}
                       </div>
-                      {url.priority && (
-                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                          Priority: {url.priority}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                  {crawlResult.urls.length > 50 && (
-                    <div className="text-center py-2 text-sm text-gray-500">
-                      ... and {crawlResult.urls.length - 50} more URLs
-                    </div>
-                  )}
+                    ))}
+                    {crawlResult.urls.length > 100 && (
+                      <div className="text-center py-2 text-sm text-gray-500">
+                        ... and {crawlResult.urls.length - 100} more URLs
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

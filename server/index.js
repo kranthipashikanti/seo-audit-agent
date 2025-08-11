@@ -396,12 +396,17 @@ app.post('/api/crawl-sitemap', async (req, res) => {
     const result = await parser.parseStringPromise(response.data);
     
     let urls = [];
+    let sitemaps = [];
     
     // Handle sitemap index
     if (result.sitemapindex && result.sitemapindex.sitemap) {
+      console.log(`Found sitemap index with ${result.sitemapindex.sitemap.length} sub-sitemaps`);
+      
       for (const sitemap of result.sitemapindex.sitemap) {
         try {
           await delay(Math.random() * 1000 + 500); // Random delay 500-1500ms
+          console.log(`Fetching sub-sitemap: ${sitemap.loc[0]}`);
+          
           const sitemapResponse = await axios.get(sitemap.loc[0], {
             timeout: 15000,
             headers: getBrowserHeaders(),
@@ -409,16 +414,40 @@ app.post('/api/crawl-sitemap', async (req, res) => {
           });
           const sitemapResult = await parser.parseStringPromise(sitemapResponse.data);
           
+          let sitemapUrls = [];
           if (sitemapResult.urlset && sitemapResult.urlset.url) {
-            urls.push(...sitemapResult.urlset.url.map(url => ({
+            sitemapUrls = sitemapResult.urlset.url.map(url => ({
               loc: url.loc[0],
               lastmod: url.lastmod ? url.lastmod[0] : null,
               changefreq: url.changefreq ? url.changefreq[0] : null,
               priority: url.priority ? parseFloat(url.priority[0]) : null
-            })));
+            }));
+            urls.push(...sitemapUrls);
+            console.log(`Added ${sitemapUrls.length} URLs from sub-sitemap`);
           }
+          
+          // Track sub-sitemap info
+          sitemaps.push({
+            url: sitemap.loc[0],
+            lastmod: sitemap.lastmod ? sitemap.lastmod[0] : null,
+            urlCount: sitemapUrls.length,
+            status: 'success'
+          });
         } catch (error) {
-          console.warn(`Failed to fetch sitemap: ${sitemap.loc[0]}`);
+          console.warn(`Failed to fetch sitemap: ${sitemap.loc[0]} - ${error.message}`);
+          sitemaps.push({
+            url: sitemap.loc[0],
+            lastmod: sitemap.lastmod ? sitemap.lastmod[0] : null,
+            urlCount: 0,
+            status: 'failed',
+            error: error.message
+          });
+        }
+        
+        // Prevent overwhelming with too many URLs (performance limit)
+        if (urls.length >= 10000) {
+          console.log(`Reached URL limit of 10,000. Stopping sitemap processing.`);
+          break;
         }
       }
     }
@@ -430,9 +459,22 @@ app.post('/api/crawl-sitemap', async (req, res) => {
         changefreq: url.changefreq ? url.changefreq[0] : null,
         priority: url.priority ? parseFloat(url.priority[0]) : null
       }));
+      
+      // For single sitemap, add it to sitemaps array
+      sitemaps.push({
+        url: sitemapUrl,
+        lastmod: null,
+        urlCount: urls.length,
+        status: 'success'
+      });
     }
 
-    res.json({ urls, total: urls.length });
+    res.json({ 
+      urls, 
+      total: urls.length,
+      sitemaps: sitemaps,
+      sitemapCount: sitemaps.length
+    });
   } catch (error) {
     console.error('Sitemap crawl error:', error.message);
     res.status(500).json({ error: 'Failed to crawl sitemap: ' + error.message });

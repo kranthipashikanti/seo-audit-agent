@@ -6,7 +6,7 @@ import xml2js from 'xml2js';
 import { getIssueResolution, calculateSEOScore } from '../api/audit-utils.js';
 
 const app = express();
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3005;
 
 console.log('Starting simple development server...');
 

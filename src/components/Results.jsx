@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { generateSEOAuditPDF } from '../utils/pdfExport';
 
 const Results = ({ results, urls }) => {
   const [selectedResult, setSelectedResult] = useState(null);
@@ -92,27 +93,86 @@ const Results = ({ results, urls }) => {
     }));
   };
 
+  const exportPDFReport = () => {
+    try {
+      generateSEOAuditPDF(successfulResults, summary);
+    } catch (error) {
+      console.error('Error generating PDF report:', error);
+      alert('Error generating PDF report. Please try again.');
+    }
+  };
+
   const exportResults = () => {
+    // Enhanced CSV with comprehensive data including resolutions
     const csvContent = [
-      ['URL', 'Score', 'Issues', 'Title Length', 'Meta Description Length', 'H1 Count', 'Images Without Alt', 'Load Time (ms)', 'Word Count'],
-      ...successfulResults.map(result => [
-        result.url,
-        result.score,
-        result.issues.length,
-        result.metrics.title.length,
-        result.metrics.metaDescription.length,
-        result.metrics.headings.h1,
-        result.metrics.images.withoutAlt,
-        result.metrics.performance.loadTime,
-        result.metrics.content.wordCount
-      ])
+      [
+        'URL', 'Score', 'Grade', 'Total Issues', 'Critical Issues', 'High Priority Issues', 'Medium Priority Issues',
+        'Title Content', 'Title Length', 'Meta Description Content', 'Meta Description Length',
+        'H1 Count', 'H2 Count', 'H3 Count', 'Total Images', 'Images Without Alt', 'Alt Text Coverage (%)',
+        'Load Time (ms)', 'Word Count', 'Audit Method',
+        'Score Breakdown - On-Page SEO', 'Score Breakdown - Technical SEO', 'Score Breakdown - Content',
+        'Score Breakdown - Images', 'Score Breakdown - User Experience', 'Score Breakdown - Advanced SEO',
+        'Issues and Resolutions'
+      ],
+      ...successfulResults.map(result => {
+        // Count issues by priority
+        let criticalCount = 0;
+        let highCount = 0;
+        let mediumCount = 0;
+        
+        if (result.issuesWithResolutions) {
+          result.issuesWithResolutions.forEach(issue => {
+            if (issue.priority === 'critical') criticalCount++;
+            else if (issue.priority === 'high') highCount++;
+            else mediumCount++;
+          });
+        }
+
+        // Format issues with resolutions for CSV
+        const issuesWithResolutionsText = result.issuesWithResolutions ? 
+          result.issuesWithResolutions.map(issueData => {
+            const implementation = issueData.implementation ? issueData.implementation.join('; ') : '';
+            return `ISSUE: ${issueData.issue} | PRIORITY: ${issueData.priority?.toUpperCase()} | CATEGORY: ${issueData.category} | SOLUTION: ${issueData.solution} | HOW TO FIX: ${implementation} | EXAMPLE: ${issueData.example || 'N/A'} | TIME TO FIX: ${issueData.timeToFix} | IMPACT: ${issueData.impact}`;
+          }).join(' || ') : 
+          (result.issues && result.issues.length > 0 ? result.issues.join('; ') : 'No issues found');
+
+        return [
+          result.url,
+          result.score,
+          result.grade || 'N/A',
+          result.issues?.length || 0,
+          criticalCount,
+          highCount,
+          mediumCount,
+          `"${(result.metrics.title.content || 'No title').replace(/"/g, '""')}"`,
+          result.metrics.title.length,
+          `"${(result.metrics.metaDescription.content || 'No meta description').replace(/"/g, '""')}"`,
+          result.metrics.metaDescription.length,
+          result.metrics.headings.h1,
+          result.metrics.headings.h2,
+          result.metrics.headings.h3,
+          result.metrics.images.total,
+          result.metrics.images.withoutAlt,
+          result.metrics.images.altTextCoverage,
+          result.metrics.performance.loadTime,
+          result.metrics.content.wordCount,
+          result.auditMethod || 'N/A',
+          result.scoreBreakdown?.onPage || 0,
+          result.scoreBreakdown?.technical || 0,
+          result.scoreBreakdown?.content || 0,
+          result.scoreBreakdown?.images || 0,
+          result.scoreBreakdown?.userExperience || 0,
+          result.scoreBreakdown?.advanced || 0,
+          `"${issuesWithResolutionsText.replace(/"/g, '""')}"`
+        ];
+      })
     ].map(row => row.join(',')).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `seo-audit-results-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `seo-audit-detailed-report-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -300,10 +360,16 @@ const Results = ({ results, urls }) => {
                 <option value="poor">Poor (&lt;60)</option>
               </select>
               <button
+                onClick={exportPDFReport}
+                className="text-sm bg-altudo-yellow text-altudo-black px-3 py-1 rounded-md hover:bg-altudo-yellow-dark font-medium"
+              >
+                Export PDF Report
+              </button>
+              <button
                 onClick={exportResults}
                 className="text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
               >
-                Export CSV
+                Export CSV Data
               </button>
             </div>
           </div>
