@@ -4,12 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `npm run dev` - Start both React frontend (port 3000) and Express backend (port 3003) concurrently
-- `npm run client` - Start only React frontend with Vite dev server
-- `npm run server` - Start only Express API server
+### Primary Commands
+- `npm run dev-full` - Start both React frontend (port 3000) and Express backend (port 3003) concurrently
+- `npm run dev` - Start only React frontend with Vite dev server (port 3000)
+- `npm run client` - Alias for `npm run dev` - React frontend only
+- `npm run server` - Start Express API server with simple configuration (port 3003)
+- `npm run server-full` - Start Express server with full SEO audit features (port 3003)
+
+### Build & Quality Commands
 - `npm run build` - Build React app for production
-- `npm run preview` - Preview production build locally  
-- `npm run lint` - Run ESLint on codebase
+- `npm run preview` - Preview production build locally (port 4173)
+- `npm run lint` - Run ESLint code quality checks
+- `npm run vercel-build` - Build optimized for Vercel deployment
+- `npm start` - Start production preview server (uses $PORT env variable)
+
+### Recommended Development Workflow
+1. Use `npm run dev-full` for full-stack development with both frontend and backend
+2. Use `npm run dev` when working only on frontend features
+3. Always run `npm run lint` before committing changes
+4. Test production builds with `npm run build && npm run preview`
 
 ## Architecture Overview
 
@@ -36,25 +49,70 @@ This is a React-based SEO audit tool with an Express.js backend proxy server. Th
 
 ## Key Technical Details
 
-**Server Architecture (`server/index.js`)**
-- Main SEO audit function: `performSEOAudit()` with retry logic and fallback
-- Fallback audit function: `performFallbackAudit()` using Axios/Cheerio
-- Issue resolution system: `SEO_RESOLUTIONS` object with detailed fix guidance
-- Anti-detection: rotating user agents, stealth plugin, random delays, browser fingerprinting
+**Server Architecture**
+- **Primary Server**: `server/index.js` - Full-featured SEO audit server with Puppeteer
+- **Simple Server**: `server/simple-server.js` - Lightweight server for basic operations
+- Main SEO audit function: `performSEOAudit()` with retry logic and intelligent fallback
+- Fallback audit function: `performFallbackAudit()` using Axios + Cheerio
+- Issue resolution system: `SEO_RESOLUTIONS` object with detailed fix guidance and implementation steps
+- Advanced anti-detection: rotating user agents, stealth plugin, random delays, browser fingerprinting
 
-**Frontend State Flow**
-- URLs discovered in SitemapCrawler flow to SEOAudit component
-- Audit results from SEOAudit flow to Results component  
-- Loading states managed centrally in App.jsx
+**API Endpoints**
+- `POST /api/crawl-sitemap` - XML sitemap parsing and URL extraction
+- `POST /api/audit` - Single URL comprehensive SEO audit
+- `POST /api/batch-audit` - Multiple URL processing with progress streaming
+- `GET /api/health` - Server health check endpoint
 
-**Development vs Production**
-- Vite dev server proxies `/api` requests to Express server on port 3003
-- Production build creates static files that need separate API server deployment
+**Frontend State Management**
+- URLs discovered in SitemapCrawler component flow to SEOAudit component
+- Audit results from SEOAudit component flow to Results component for display
+- Loading states and progress tracking managed centrally in App.jsx
+- Real-time batch audit progress via Server-Sent Events (SSE)
+
+**Development vs Production Environment**
+- **Development**: Vite dev server automatically proxies `/api` requests to Express server (port 3003)
+- **Production**: Static build served separately from API server - requires both services running
+- **Configuration**: Uses environment variables for API URLs and deployment settings
 
 ## Common Development Tasks
 
-When working on SEO analysis features, the main logic is in `server/index.js` in the `performSEOAudit()` function. The scoring algorithm and issue detection are centralized there.
+### SEO Analysis Engine Development
+- **Primary Logic Location**: `server/index.js` - `performSEOAudit()` function contains core audit logic
+- **Scoring Algorithm**: Centralized 100-point scoring system with weighted factors
+- **Issue Detection**: All SEO problems detected and categorized in main audit function
+- **Resolution System**: `SEO_RESOLUTIONS` object provides actionable fix guidance for each issue type
+- **Testing**: Use simple test URLs or public websites for development testing
 
-For UI changes, the three main components are in `src/components/`: SitemapCrawler.jsx, SEOAudit.jsx, and Results.jsx.
+### Frontend Component Development
+- **Main Components**: Located in `src/components/` directory
+  - `SitemapCrawler.jsx` - Sitemap discovery and URL extraction interface
+  - `SEOAudit.jsx` - Single and batch audit controls and progress display
+  - `Results.jsx` - Comprehensive results dashboard with export functionality
+- **State Management**: Centralized in `src/App.jsx` with props drilling to child components
+- **Styling**: Uses Tailwind CSS utility classes - refer to existing components for patterns
 
-The application uses Puppeteer for accurate rendering and SEO analysis, with Axios/Cheerio as fallback when detection occurs.
+### Backend API Development
+- **Server Files**:
+  - `server/index.js` - Full-featured server with Puppeteer integration
+  - `server/simple-server.js` - Lightweight alternative for basic functionality
+- **Anti-Detection Features**: Puppeteer with stealth plugin + rotating user agents + random delays
+- **Fallback System**: Axios + Cheerio when Puppeteer detection occurs or fails
+- **Rate Limiting**: Built-in throttling for batch operations to avoid blocking
+
+### Testing and Debugging
+- **Development Testing**: Use `npm run dev-full` and test with real websites
+- **API Testing**: Use `curl` or Postman to test endpoints directly
+- **Browser Testing**: Puppeteer issues can be debugged by setting `headless: false` in development
+- **Fallback Testing**: Simulate Puppeteer failures to test Axios/Cheerio fallback path
+
+### Performance Optimization
+- **Batch Processing**: Configurable concurrency limits and delays between requests
+- **Memory Management**: Puppeteer browser instances are properly closed after use
+- **Caching**: Consider implementing response caching for frequently audited URLs
+- **Error Handling**: Comprehensive error catching with graceful fallbacks
+
+### Deployment Considerations
+- **Environment Variables**: Configure API URLs, ports, and Puppeteer settings
+- **Browser Dependencies**: Ensure Chromium/Chrome is available in production environment  
+- **Resource Limits**: Monitor memory usage during batch processing operations
+- **CORS Configuration**: Properly configured for cross-origin requests in production

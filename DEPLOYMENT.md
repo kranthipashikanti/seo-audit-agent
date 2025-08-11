@@ -1,13 +1,31 @@
-# Deployment Guide for SEO Audit Agent
+# Production Deployment Guide
 
-This guide will help you deploy the SEO Audit Agent to Vercel for production use.
+Comprehensive deployment guide for the SEO Audit Agent across multiple platforms including Vercel, traditional servers, Docker, and cloud services.
 
-## 🚀 Quick Deployment to Vercel
+## 🎯 Deployment Options Overview
+
+| Platform | Best For | Complexity | Cost | Full Stack Support |
+|----------|----------|------------|------|-------------------|
+| **Vercel** | Frontend + Serverless API | Easy | Free tier available | Limited (serverless functions) |
+| **Traditional Server** | Full control | Medium | VPS costs | Full support |
+| **Docker** | Containerized deployment | Medium | Infrastructure costs | Full support |
+| **Digital Ocean** | Managed full-stack | Easy | $5+/month | Full support |
+| **Heroku** | Quick deployment | Easy | $7+/month | Full support |
+
+## 🚀 Method 1: Vercel Deployment (Frontend + Serverless)
 
 ### Prerequisites
-- Node.js 16+ installed locally
+- Node.js 18+ installed locally
 - Git repository (GitHub, GitLab, or Bitbucket)
 - Vercel account (free tier available)
+
+### Advantages
+- ✅ Free tier available
+- ✅ Global CDN
+- ✅ Automatic SSL certificates
+- ✅ Easy deployment
+- ❌ Limited to serverless functions (no Puppeteer)
+- ❌ Function timeout limits (30-60s)
 
 ### Step 1: Prepare Your Repository
 
@@ -89,13 +107,187 @@ If you need environment variables:
 - **Batch Size Limits**: Maximum 10 URLs per batch audit
 - **No Real Browser Rendering**: Static HTML analysis only
 
-## 🔧 API Endpoints
+## 🖥️ Method 2: Traditional Server Deployment (Full Features)
+
+### Prerequisites
+- Linux VPS (Ubuntu 20.04+ recommended)
+- Root/sudo access
+- Domain name (optional but recommended)
+
+### Advantages
+- ✅ Full Puppeteer support
+- ✅ No function timeouts
+- ✅ Complete control
+- ✅ Better batch processing
+- ❌ Requires server management
+- ❌ Manual SSL setup
+
+### Installation Steps
+
+1. **Server Setup**
+   ```bash
+   # Update system
+   sudo apt update && sudo apt upgrade -y
+   
+   # Install Node.js 18
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   
+   # Install Puppeteer dependencies
+   sudo apt-get install -y gconf-service libasound2-dev libgbm-dev \
+   libatk1.0-dev libcairo-gobject2 libgtk-3-dev libgdk-pixbuf2.0-dev
+   ```
+
+2. **Application Deployment**
+   ```bash
+   # Clone repository
+   git clone <your-repo-url>
+   cd seo-audit-agent
+   
+   # Install dependencies
+   npm ci --production
+   
+   # Build frontend
+   npm run build
+   
+   # Start services with PM2
+   npm install -g pm2
+   pm2 start server/index.js --name seo-api
+   pm2 start "npm run preview" --name seo-frontend
+   pm2 startup
+   pm2 save
+   ```
+
+3. **Nginx Reverse Proxy**
+   ```bash
+   sudo apt install nginx
+   sudo nano /etc/nginx/sites-available/seo-audit-agent
+   ```
+   
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+       
+       location / {
+           proxy_pass http://localhost:4173;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+       
+       location /api {
+           proxy_pass http://localhost:3003;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
+
+4. **SSL Certificate (Let's Encrypt)**
+   ```bash
+   sudo apt install certbot python3-certbot-nginx
+   sudo certbot --nginx -d your-domain.com
+   ```
+
+## 🐳 Method 3: Docker Deployment
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Basic Docker knowledge
+
+### Advantages
+- ✅ Consistent environment
+- ✅ Easy scaling
+- ✅ Full feature support
+- ✅ Platform independent
+
+### Deployment Steps
+
+1. **Create docker-compose.yml**
+   ```yaml
+   version: '3.8'
+   services:
+     seo-audit-agent:
+       build: .
+       ports:
+         - "3000:3000"
+         - "3003:3003"
+       environment:
+         - NODE_ENV=production
+         - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+       volumes:
+         - ./data:/app/data
+       restart: unless-stopped
+   ```
+
+2. **Deploy**
+   ```bash
+   docker-compose up -d
+   ```
+
+## ☁️ Method 4: Cloud Platform Deployment
+
+### Digital Ocean App Platform
+
+1. **Create app.yaml**
+   ```yaml
+   name: seo-audit-agent
+   services:
+   - name: web
+     source_dir: /
+     build_command: npm run build
+     run_command: npm run dev-full
+     environment_slug: node-js
+     instance_count: 1
+     instance_size_slug: basic-xxs
+     envs:
+     - key: NODE_ENV
+       value: production
+   ```
+
+### Heroku Deployment
+
+1. **Add Heroku buildpacks**
+   ```bash
+   heroku buildpacks:add heroku/nodejs
+   heroku buildpacks:add jontewks/puppeteer
+   ```
+
+2. **Configure package.json**
+   ```json
+   {
+     "scripts": {
+       "heroku-postbuild": "npm run build",
+       "start": "npm run dev-full"
+     }
+   }
+   ```
+
+## 🔧 API Endpoints Reference
 
 After deployment, your API endpoints will be available at:
 
-- **Crawl Sitemap**: `https://your-app.vercel.app/api/crawl-sitemap`
-- **Single Audit**: `https://your-app.vercel.app/api/audit`
-- **Batch Audit**: `https://your-app.vercel.app/api/batch-audit`
+### Production URLs
+- **Health Check**: `https://your-domain.com/api/health`
+- **Crawl Sitemap**: `https://your-domain.com/api/crawl-sitemap`
+- **Single Audit**: `https://your-domain.com/api/audit`
+- **Batch Audit**: `https://your-domain.com/api/batch-audit`
+
+### Testing Endpoints
+```bash
+# Health check
+curl https://your-domain.com/api/health
+
+# Test sitemap crawl
+curl -X POST https://your-domain.com/api/crawl-sitemap \
+  -H "Content-Type: application/json" \
+  -d '{"sitemapUrl":"https://example.com/sitemap.xml"}'
+
+# Test single audit
+curl -X POST https://your-domain.com/api/audit \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
 
 ## 🛠️ Local Development vs Production
 
